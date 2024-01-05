@@ -1,0 +1,235 @@
+SELECT coalesce(cast(uuid as VARCHAR),'') as uuid,
+coalesce(cast(dm.country_name as VARCHAR),'') as country_name,
+dm.country_id,
+dm.city_id,
+coalesce(cast(store_name as VARCHAR),'') as store_name,
+coalesce(cast(fulfillment_types as VARCHAR),'') as fulfillment_types,
+coalesce(cast(location_type as VARCHAR),'') as location_type,
+coalesce(cast(first_visible_timestamp_local as VARCHAR),'') as first_visible_timestamp_local,
+coalesce(cast(first_visible_timestamp_utc as VARCHAR),'') as first_visible_timestamp_utc,
+coalesce(cast(parent_chain_uuid as VARCHAR),'') as parent_chain_uuid,
+coalesce(cast(parent_chain_name as VARCHAR),'') as parent_chain_name,
+coalesce(cast(first_order_timestamp_utc as VARCHAR),'') as first_order_timestamp_utc,
+coalesce(cast(first_order_timestamp_local as VARCHAR),'') as first_order_timestamp_local,
+coalesce(cast(first_order_by_fulfillment_type_utc as VARCHAR),'') as first_order_by_fulfillment_type_utc,
+coalesce(cast(first_order_by_fulfillment_type_local as VARCHAR),'') as first_order_by_fulfillment_type_local,
+coalesce(cast(is_eats_marketplace as VARCHAR),'') as is_eats_marketplace,
+coalesce(cast(is_visible as VARCHAR),'') as is_visible,
+coalesce(cast(status as VARCHAR),'') as status,
+coalesce(cast(primary_contact_phone_dm as VARCHAR),'') as primary_contact_phone_dm,
+coalesce(cast(primary_contact_email_dm as VARCHAR),'') as primary_contact_email_dm,
+coalesce(cast(payment_subscriber_email_1_dm as VARCHAR),'') as payment_subscriber_email_1_dm,
+coalesce(cast(payment_subscriber_email_2_dm as VARCHAR),'') as payment_subscriber_email_2_dm,
+coalesce(cast(payment_subscriber_email_3_dm as VARCHAR),'') as payment_subscriber_email_3_dm,
+coalesce(cast(payment_subscriber_email_4_dm as VARCHAR),'') as payment_subscriber_email_4_dm,
+coalesce(cast(payment_subscriber_email_5_dm as VARCHAR),'') as payment_subscriber_email_5_dm,
+coalesce(cast(payment_subscriber_email_6_dm as VARCHAR),'') as payment_subscriber_email_6_dm,
+coalesce(cast(payment_subscriber_email_7_dm as VARCHAR),'') as payment_subscriber_email_7_dm,
+coalesce(cast(payment_subscriber_email_8_dm as VARCHAR),'') as payment_subscriber_email_8_dm,
+coalesce(cast(first_available_timestamp_local as VARCHAR),'') as first_available_timestamp_local,
+coalesce(cast(first_available_timestamp_utc as VARCHAR),'') as first_available_timestamp_utc,
+coalesce(cast(is_test_account as VARCHAR),'') as is_test_account,
+coalesce(cast(pos_integration_type as VARCHAR),'') as pos_integration_type,
+coalesce(cast(cast(ror.ror_l7d as int) as VARCHAR),'') as ror,
+coalesce(cast(first_trip_date as VARCHAR),'') as first_trip_date,
+
+coalesce(cast(cast(total_orders aS decimal(22,0))  as VARCHAR),'') as total_orders,
+coalesce(cast(cast(total_orders_l90d aS decimal(22,0)) as VARCHAR),'') as total_orders_l90d,
+coalesce(cast(has_tax_profile as VARCHAR),'') as has_tax_profile,
+coalesce(cast(profile_type as VARCHAR),'') as profile_type,
+coalesce(cast(is_deleted as VARCHAR),'') as is_deleted,
+coalesce(cast(payment_profile_status as VARCHAR),'') as payment_profile_status,
+coalesce(cast(segment as VARCHAR),'') as segment,
+
+
+
+
+coalesce(cast(TRY(CAST(ROUND(ado.eater_visits_st_count_l4w,2) AS varchar))  as varchar),'') as eater_visits_st_count_l4w,
+coalesce(cast(TRY(CAST(ROUND(ado.avg_views_count_l4w,2) AS varchar))  as varchar),'') as avg_views_count_l4w,
+coalesce(cast(TRY(CAST(ado.ads_available_l4w AS varchar))  as varchar),'') as ads_available_l4w,
+coalesce(cast(TRY(CAST(ado.promotion_type_l4w AS varchar)) as varchar),'') as promotion_type_l4w,
+coalesce(cast(TRY(CAST(ROUND(ado.orders_with_ads_l4w,2) AS varchar))  as varchar),'') as orders_with_ads_l4w,
+--coalesce(cast(TRY(CAST(ROUND(TRY(ado.roas_with_ads_table_l4w)),2) AS varchar))  as varchar),'') as roas_with_ads_table_l4w,
+--coalesce(cast(TRY(CAST(ROUND(ado.roas_with_ads_table_l4w),2) AS varchar))  as varchar),'') as roas_with_ads_table_l4w,
+CASE WHEN  coalesce(cast(TRY(CAST(ROUND(TRY(ado.roas_with_ads_table_l4w),2) AS varchar))  as varchar),'')  IN ('Infinity', 'NaN')  THEN '0.00' 
+WHEN coalesce(cast(TRY(CAST(ROUND(TRY(ado.roas_with_ads_table_l4w),2) AS varchar))  as varchar),'')  LIKE '%E%' THEN  '0.00' 
+ELSE coalesce(cast(TRY(CAST(ROUND(TRY(ado.roas_with_ads_table_l4w),2) AS varchar))  as varchar),'')  end  as roas_with_ads_table_l4w,
+
+CASE WHEN  coalesce(cast(TRY(CAST(ROUND(TRY(ado.exposed_roas_with_ads_table_l4w),2) AS varchar))  as varchar),'')  IN ('Infinity', 'NaN')  THEN '0.00' 
+WHEN coalesce(cast(TRY(CAST(ROUND(TRY(ado.exposed_roas_with_ads_table_l4w),2) AS varchar))  as varchar),'')  LIKE '%E%' THEN  '0.00' 
+ELSE coalesce(cast(TRY(CAST(ROUND(TRY(ado.exposed_roas_with_ads_table_l4w),2) AS varchar))  as varchar),'')  end  as exposed_roas_with_ads_table_l4w,
+
+
+coalesce(cast(TRY(CAST(ado.multilocation_flag AS varchar))  as varchar),'') as multilocation_flag,
+CAST(coalesce(ado.days_after_ft ,0) AS decimal(22,2)) AS days_after_ft,
+coalesce(cast(TRY(CAST(ado.normalized_search_term_l4w AS varchar))  as varchar),'') as normalized_search_term_l4w,
+CAST(coalesce(total_eaters_searchs_L4W ,0) AS decimal(22,2)) AS eater_searchs_l4w,
+'0' AS searched_restaurants_count_l4w,
+
+coalesce(CAST(xp.experiment_key AS VARCHAR), '') AS experiment_key,
+coalesce(CAST(xp.treatment_group_key AS VARCHAR), '') AS treatment_group_key,
+coalesce(CAST(dm.city_name AS VARCHAR), '') AS city_name,
+coalesce(CAST(ads_credits AS VARCHAR), '') AS ads_credits
+
+
+
+
+FROM gcrm_data.gcrm_dim_merchant dm 
+LEFT JOIN dwh.dim_city dc on dm.city_id = dc.city_id
+LEFT JOIN gcrm_data.gcrm_merchant_analytics_ror ror   ON ror.restaurant_uuid_1 = dm.uuid 
+LEFT JOIN gcrm_data.gcrm_merchant_analytics_ads_adoption  ado ON ado.resto_uuid_ads_campaign = dm.uuid 
+
+LEFT JOIN (
+ with base as (
+SELECT dm.uuid as restaurant_uuid, dm.primary_contact_email as email, 'Primary_contact_email' as mtype, dm.store_name,
+date_diff('day',  DATE(dm.first_order_timestamp_local), CURRENT_DATE) as days_after_ft
+FROM eds.dim_merchant dm 
+JOIN dwh.dim_city dc on dm.city_id = dc.city_id
+--JOIN eats_salesops.res_fact d ON DM.UUID = D.restaurant_uuid
+LEFT JOIN secure_kirby_external_data.salesforce_eats_account acc_st ON acc_st.uuid__c = dm.uuid
+ LEFT JOIN secure_kirby_external_data.salesforce_eats_account acc_pl ON acc_pl.id = acc_st.parentid
+WHERE 1=1
+AND dm.is_visible = TRUE
+AND dm.status = 'ACTIVE'
+AND dm.is_test_account = FALSE
+AND dm.location_type<>'DELIVERY_API'
+AND dc.country_id IN (1,10,32,126)
+
+AND dm.primary_contact_email NOT IN (
+
+SELECT event.email_address
+from euclid.crmmarketing_email_sendjob send
+    join euclid.crmmarketing_eventlog event on event.send_id = send.send_id and event.report_date = send.report_date
+    WHERE  send.email_name in (
+     'rcrm_apac_anz_merchants_AdsAdoption_MU_ELC_Ads_Edu_EM2',
+'rcrm_apac_anz_merchants_AdsAdoption_MU_ELC_Ads_Edu_EM5B',
+'rcrm_apac_anz_merchants_AdsAdoption_MU_ELC_Ads_Edu_EM4',
+'rcrm_apac_anz_merchants_AdsAdoption_MU_ELC_Ads_Edu_EM6',
+'rcrm_apac_anz_merchants_AdsAdoption_MU_ELC_Ads_Edu_EM3',
+'rcrm_apac_anz_merchants_AdsAdoption_MU_ELC_Ads_Edu_EM1',
+'rcrm_apac_anz_merchants_AdsAdoption_MU_ELC_Ads_Edu_EM5')
+
+)
+AND dm.uuid  NOT IN 
+(
+SELECT 
+DISTINCT 
+ADS.restaurant_uuid
+FROM ads.ads_metrics_daily_utc ads 
+WHERE 1 = 1
+AND SPEND_USD> 0 AND spend_local> 0
+)
+
+AND acc_pl.named_account__c like '%SMB%'
+--AND  date_diff('day',  DATE(d.first_trip_date), CURRENT_DATE) >= 28  
+
+),
+
+multilocation as (
+  SELECT
+    lower(email) as email,
+    count(*) as locations
+  FROM
+    base
+  GROUP BY
+    1
+),
+
+
+conversion AS (
+SELECT 
+ rfs.restaurant_uuid, 
+ ROUND(AVG(n_sessions_any_impression),0) AS AVG_Views,
+ SUM(n_sessions_menu_impression) AS Total_Eaters
+FROM eds.agg_restaurant_funnel rfs
+JOIN base b ON rfs.restaurant_uuid = b.restaurant_uuid
+WHERE DATE(datestr) >= CURRENT_DATE - INTERVAL '30' DAY
+GROUP BY 1),
+
+ads as (
+SELECT 
+ ads.restaurant_uuid,
+ case when SUM(spend_local) > 0 then TRUE ELSE FALSE END AS ads_available
+FROM ads.ads_metrics_daily_utc ads 
+JOIN base b on b.restaurant_uuid = ads.restaurant_uuid
+WHERE 1 = 1
+AND CAST(datestr AS DATE) >= CURRENT_DATE - INTERVAL '30' DAY
+GROUP BY 1
+HAVING SUM(spend_local) > 0
+),
+
+offers as (
+SELECT DISTINCT rpm.restaurant_uuid, rpm.num_redemptions,
+ CASE WHEN rpm.promotion_type = 'BOGO' THEN 'Buy One Get One'
+      WHEN rpm.promotion_type = 'DISCOUNTEDITEM' THEN 'Discounted Item'
+      WHEN rpm.promotion_type = 'FLAT' THEN ''
+      WHEN rpm.promotion_type = 'PERCENTAGE' THEN ''
+      WHEN rpm.promotion_type = 'FREEITEM' THEN 'Free Item'
+      WHEN rpm.promotion_type = 'FREEDELIVERY' THEN 'Free Delivery'
+   ELSE rpm.promotion_type
+  END AS promotion_type,
+ DATE_TRUNC('day', CAST(DATE((FROM_UNIXTIME(rpm.start_at/1000))) AS DATE)) AS start_date,
+ DATE_TRUNC('day', CAST(DATE((FROM_UNIXTIME(rpm.end_at/1000))) AS DATE)) AS end_date,
+ CASE WHEN CURRENT_DATE > DATE_TRUNC('day', CAST(DATE((FROM_UNIXTIME(rpm.start_at/1000))) AS DATE)) 
+ AND CURRENT_DATE < DATE_TRUNC('day', CAST(DATE((FROM_UNIXTIME(rpm.end_at/1000))) AS DATE)) 
+ THEN 'True'
+ ELSE 'False'
+ END AS camp_date,
+ ROW_NUMBER() OVER (PARTITION BY rpm.restaurant_uuid ORDER BY rpm.num_redemptions DESC) AS RowNum
+FROM offers.restaurant_promo_metrics_latest rpm
+JOIN base r on r.restaurant_uuid = rpm.restaurant_uuid
+WHERE (CASE WHEN CURRENT_DATE > DATE_TRUNC('day', CAST(DATE((FROM_UNIXTIME(rpm.start_at/1000))) AS DATE)) 
+ AND CURRENT_DATE < DATE_TRUNC('day', CAST(DATE((FROM_UNIXTIME(rpm.end_at/1000))) AS DATE)) 
+ THEN 'True'
+ ELSE 'False'
+ END) = 'True'
+GROUP BY 1, 2, 3, 4, DATE_TRUNC('day', CAST(DATE((FROM_UNIXTIME(rpm.start_at/1000))) AS DATE)),
+DATE_TRUNC('day', CAST(DATE((FROM_UNIXTIME(rpm.end_at/1000))) AS DATE))
+),
+
+orders as (
+SELECT restaurant_uuid, sum(orders) as orders
+FROM ads.ads_campaign_metrics_daily_utc
+WHERE CAST(datestr AS DATE) >= CURRENT_DATE - INTERVAL '30' DAY
+GROUP BY 1
+),
+
+roas as (
+SELECT ds.restaurant_uuid, 
+COALESCE(TRY(sum(ds.revenue_usd*1.0)/sum(ds.spend_usd) ), NULL)  as roas_with_ads_table, 
+COALESCE(TRY(sum(ds.exposed_revenue_usd*1.0)/sum(ds.spend_usd) ), NULL) as exposed_roas_with_ads_table
+FROM ads.ads_metrics_daily_utc ds
+JOIN base b ON ds.restaurant_uuid = b.restaurant_uuid
+GROUP BY 1
+)
+,
+smry as
+(
+SELECT b.restaurant_uuid,CASE
+    WHEN ml.locations > 1
+    then TRUE
+    ELSE FALSE
+  END AS multilocation_flag, b.days_after_ft
+,TO_MD5_MOD(CONCAT('elc_ad_adoption_campaign',b.restaurant_uuid,'.',b.email), 100) as bucket_id 
+FROM base b
+LEFT JOIN conversion cn ON cn.restaurant_uuid = b.restaurant_uuid
+LEFT JOIN ads ad ON ad.restaurant_uuid = b.restaurant_uuid
+LEFT JOIN offers off ON off.restaurant_uuid = b.restaurant_uuid and  off.RowNum = 1
+LEFT JOIN orders ord ON ord.restaurant_uuid = b.restaurant_uuid
+LEFT JOIN roas ro ON ro.restaurant_uuid = b.restaurant_uuid
+LEFT JOIN multilocation ml  on ml.email = b.email
+)
+
+select 
+'elc_ad_adoption_campaign' as experiment_key
+,case when bucket_id BETWEEN 0 and 49 then 'Control' else 'Variant1' end as treatment_group_key
+,*
+from
+    smry
+where
+    days_after_ft BETWEEN 28 and 120
+AND multilocation_flag = FALSE 
+
+
+
+) xp ON xp.restaurant_uuid = dm.uuid
