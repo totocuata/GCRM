@@ -1,0 +1,22 @@
+
+SELECT
+  coalesce(cast(o.id as VARCHAR), '') as OpportunityID,
+  coalesce(cast(o.createddate as VARCHAR), '') as Createddate,
+  coalesce(cast(o.accountid as VARCHAR), '') as AccountID,
+  coalesce(
+    cast(
+      coalesce(
+        Case
+          when lower(o.initial_photo_schedule_link__c) is null
+          then ''
+          when lower(o.initial_photo_schedule_link__c) not like '%stock%'
+          then 'Photoshoot Ordered'
+          else 'Not Ordered'
+        end,
+        ''
+      ) as VARCHAR
+    ),
+    ''
+  ) as Initial_Photography_Schedule_Link
+FROM
+  secure_kirby_external_data.salesforce_eats_opportunity_latest AS o
