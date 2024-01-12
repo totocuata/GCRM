@@ -1,0 +1,87 @@
+
+WITH account as (
+  SELECT
+    u._row_key as duuid,
+    --u.organization.name as store_name,
+    u.entity_info.uuid,
+    o.organization.email_v2.email_address AS email,
+    o.organization.address_v2.country_iso2 as country,
+    o.organization.address_v2.city_id as city_id,
+    o.organization.address_v2.city as city_name
+  from
+    rawdata.schemaless_userstore_udr_entities_rows u
+    join customer_platform.organizations o on u._row_key = o._row_key
+  WHERE
+    u.direct_organization.channel_type = 'CHANNEL_TYPE_SELF_SIGN_UP'
+    and u.entity_info.tenancy = 'uber/production'
+    and date(u.datestr) >= CURRENT_DATE - INTERVAL '30' DAY
+    and o.organization.address_v2.country_iso2 IN ('US', 'CA')
+),
+
+
+
+
+payment AS (
+  select
+    entity_uuid,
+    min(profile_version_start_time) as card_date_added,
+    cast(max(card_number) AS varchar) as card_number
+  from
+    money.dim_payment_profile
+  group by
+    1
+),
+ft as (
+  select
+    o._row_key as duuid,
+    --entity_info.uuid,
+    count(DISTINCT workflow_uuid) as Trips
+  from
+    customer_platform.organizations o
+    LEFT JOIN eds.dim_merchant dm ON dm.parent_chain_uuid = entity_info.uuid
+    LEFT JOIN eds.fact_eats_trip fte ON fte.restaurant_uuid = dm.uuid
+  where
+    direct_organization.channel_type = 'CHANNEL_TYPE_SELF_SIGN_UP'
+    and entity_info.tenancy = 'uber/production' --and organization.email_v2.email_address not like '%@uber.com'
+    --and upper(organization.name) not like '%TEST%'
+    AND DATE(datestr) >= CURRENT_DATE - INTERVAL '31' DAY
+    and organization.address_v2.country_iso2 IN ('US', 'CA')
+  GROUP BY
+    1
+)
+
+select * from (
+SELECT
+  DISTINCT --a.store_name,
+  a.email,
+  --a.country,
+  case
+    when a.country = 'US'
+    then 1
+    when a.country = 'CA'
+    then 32
+    else null
+  end  as country_id,
+  --a.city_name,
+  case when dc.city_id is null then 0 else  cast(dc.city_id as int) end  AS city_id,
+  a.email as subscriber_key,
+  a.duuid as uuid
+--  case
+--    when p.card_number is not null
+--    then true
+--    else false
+--  end as payment_method,
+--  CASE
+--    WHEN Trips >= 1
+--    THEN true
+--    else false
+--  end as first_trip,
+--  'account_creation' as last_form
+FROM
+  account AS a
+  LEFT JOIN dwh.dim_city dc on dc.city_name = a.city_name
+  LEFT JOIN payment AS p ON p.entity_uuid = a.duuid
+  LEFT JOIN ft ft on a.duuid = ft.duuid 
+ WHERE p.card_number is null 
+ and ft.Trips is null
+ )
