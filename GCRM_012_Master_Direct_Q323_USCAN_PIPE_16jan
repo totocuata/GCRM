@@ -1,0 +1,119 @@
+WITH account as (
+  SELECT
+    u._row_key as duuid,
+    u.datestr,
+    --u.organization.name as store_name,
+    u.entity_info.uuid,
+    o.organization.email_v2.email_address AS email,
+    o.organization.address_v2.country_iso2 as country,
+    o.organization.address_v2.city_id as city_id,
+    o.organization.address_v2.city as city_name
+  from
+    rawdata.schemaless_userstore_udr_entities_rows u
+    join customer_platform.organizations o on u._row_key = o._row_key
+  WHERE
+    u.direct_organization.channel_type = 'CHANNEL_TYPE_SELF_SIGN_UP'
+    and u.entity_info.tenancy = 'uber/production'
+    and date(u.datestr) >= CURRENT_DATE - INTERVAL '30' DAY
+    and o.organization.address_v2.country_iso2 IN ('DE','US','CA','ES','FR','ZA','PT')
+),
+
+
+payment AS (
+  select
+    entity_uuid,
+    min(profile_version_start_time) as card_date_added,
+    cast(max(card_number) AS varchar) as card_number
+  from
+    money.dim_payment_profile
+  group by
+    1
+),
+
+auth_user as (
+select uuid, min(datestr) as au_date from (
+
+select 
+event_name,
+request,
+datestr,
+replace(cast(orgs as varchar), '"','') as uuid 
+from (
+select
+  msg.event_name,
+  msg.request,
+  json_extract(json_extract(json_extract(JSON_PARSE(msg.request), 'organization_id'), 'uuid'), 'value') as orgs,
+  msg.response,
+  datestr
+from
+  rawdata_user.kafka_hp_direct_presentation_event_nodedup
+where 1=1 
+--msg.request like '%38f0f951-f992-4b05-97f7-95c468058a14%'
+  and msg.event_name = 'partnermanager_gateway'
+  and msg.request like '%"organization_id"%'
+  and date(datestr) >= CURRENT_DATE - INTERVAL '30' DAY
+ )
+ ) group by 1
+),
+
+
+
+
+dim_ft as (
+  select
+    o._row_key as duuid,
+    dm.uber_merchant_type,
+    dm.city_id,
+    min( case when is_completed = true then datestr end) as completed_first_trip ,
+    min( case when is_completed = false then datestr end) as incompleted_first_trip ,
+    max(case when is_completed = true then datestr end) as last_trip_date,
+    count(DISTINCT workflow_uuid) as Trips
+  from
+    customer_platform.organizations o
+    LEFT JOIN eds.dim_merchant dm ON dm.parent_chain_uuid = entity_info.uuid
+    --LEFT JOIN  dwh.dim_city dc on dm.city_id = dc.city_id 
+    LEFT JOIN eds.fact_eats_trip fte ON fte.restaurant_uuid = dm.uuid
+  where
+    direct_organization.channel_type = 'CHANNEL_TYPE_SELF_SIGN_UP'
+    and entity_info.tenancy = 'uber/production' 
+    AND DATE(datestr) >= CURRENT_DATE - INTERVAL '31' DAY
+    and organization.address_v2.country_iso2 IN ('DE','US','CA','ES','FR','ZA','PT')
+  GROUP BY
+    1,2,3
+)
+
+select * from (
+SELECT
+  DISTINCT 
+    a.duuid as uuid,
+    coalesce(ft.uber_merchant_type,'') as Merchant_Category,
+  case
+when a.country = 'DE' then 65
+when a.country = 'US' then 1
+when a.country = 'CA' then 32
+when a.country = 'ES' then 162
+when a.country = 'FR' then 61
+when a.country = 'ZA' then 161
+when a.country = 'PT' then 140
+    else null
+  end  as country_id,
+  case when ft.city_id is not null then cast(ft.city_id as int)
+  when dc.city_id is null then 0 else  cast(dc.city_id as int) end  AS city_id,
+      a.email,
+      a.duuid as subscriber_key,
+coalesce(cast(cast(a.datestr as date) as varchar) ,'')  as account_created_date,
+coalesce(cast(cast(p.card_date_added as date) as varchar),'') as payment_method_date, 
+coalesce(cast(cast(ft.completed_first_trip as date) as varchar),'') as completed_first_trip,
+coalesce(cast(cast(ft.incompleted_first_trip as date) as varchar),'') as incompleted_first_trip,
+coalesce(cast(cast(ft.last_trip_date as date) as varchar),'')  as last_trip_date,
+coalesce(cast(cast(au.au_date as date) as varchar),'')  as authorized_user_date
+
+FROM
+  account AS a
+  LEFT JOIN dwh.dim_city dc on dc.city_name = a.city_name
+  LEFT JOIN payment AS p ON p.entity_uuid = a.duuid
+  LEFT JOIN dim_ft as ft  on a.duuid = ft.duuid 
+  LEFT JOIN auth_user as au on au.uuid = a.duuid
+ WHERE 1=1
+ )
+
