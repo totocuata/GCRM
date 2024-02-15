@@ -1,0 +1,111 @@
+
+SELECT 
+DISTINCT 
+coalesce(cast(dm.uuid as VARCHAR),'') as uuid,
+coalesce(cast(dm.country_name as VARCHAR),'') as country_name,
+dm.country_id,
+dm.city_id,
+coalesce(cast(dm.store_name as VARCHAR),'') as store_name,
+coalesce(cast(dm.fulfillment_types as VARCHAR),'') as fulfillment_types,
+coalesce(cast(dm.location_type as VARCHAR),'') as location_type,
+coalesce(cast(dm.first_visible_timestamp_local as VARCHAR),'') as first_visible_timestamp_local,
+coalesce(cast(dm.first_visible_timestamp_utc as VARCHAR),'') as first_visible_timestamp_utc,
+coalesce(cast(dm.parent_chain_uuid as VARCHAR),'') as parent_chain_uuid,
+coalesce(cast(dm.parent_chain_name as VARCHAR),'') as parent_chain_name,
+coalesce(cast(dm.first_order_timestamp_utc as VARCHAR),'') as first_order_timestamp_utc,
+coalesce(cast(dm.first_order_timestamp_local as VARCHAR),'') as first_order_timestamp_local,
+coalesce(cast(dm.first_order_by_fulfillment_type_utc as VARCHAR),'') as first_order_by_fulfillment_type_utc,
+coalesce(cast(dm.first_order_by_fulfillment_type_local as VARCHAR),'') as first_order_by_fulfillment_type_local,
+coalesce(cast(dm.is_eats_marketplace as VARCHAR),'') as is_eats_marketplace,
+coalesce(cast(dm.is_visible as VARCHAR),'') as is_visible,
+coalesce(cast(dm.status as VARCHAR),'') as status,
+coalesce(cast(primary_contact_phone_dm as VARCHAR),'') as primary_contact_phone_dm,
+coalesce(cast(primary_contact_email_dm as VARCHAR),'') as primary_contact_email_dm,
+coalesce(cast(payment_subscriber_email_1_dm as VARCHAR),'') as payment_subscriber_email_1_dm,
+coalesce(cast(payment_subscriber_email_2_dm as VARCHAR),'') as payment_subscriber_email_2_dm,
+coalesce(cast(payment_subscriber_email_3_dm as VARCHAR),'') as payment_subscriber_email_3_dm,
+coalesce(cast(payment_subscriber_email_4_dm as VARCHAR),'') as payment_subscriber_email_4_dm,
+coalesce(cast(payment_subscriber_email_5_dm as VARCHAR),'') as payment_subscriber_email_5_dm,
+coalesce(cast(payment_subscriber_email_6_dm as VARCHAR),'') as payment_subscriber_email_6_dm,
+coalesce(cast(payment_subscriber_email_7_dm as VARCHAR),'') as payment_subscriber_email_7_dm,
+coalesce(cast(payment_subscriber_email_8_dm as VARCHAR),'') as payment_subscriber_email_8_dm,
+coalesce(cast(dm.first_available_timestamp_local as VARCHAR),'') as first_available_timestamp_local,
+coalesce(cast(dm.first_available_timestamp_utc as VARCHAR),'') as first_available_timestamp_utc,
+coalesce(cast(dm.is_test_account as VARCHAR),'') as is_test_account,
+coalesce(cast(dm.pos_integration_type as VARCHAR),'') as pos_integration_type,
+coalesce(cast(cast(ror.ror_l7d as int) as VARCHAR),'') as ror,
+coalesce(cast(first_trip_date as VARCHAR),'') as first_trip_date,
+
+coalesce(cast(cast(total_orders aS decimal(22,0))  as VARCHAR),'') as total_orders,
+coalesce(cast(cast(total_orders_l90d aS decimal(22,0)) as VARCHAR),'') as total_orders_l90d,
+coalesce(cast(has_tax_profile as VARCHAR),'') as has_tax_profile,
+coalesce(cast(profile_type as VARCHAR),'') as profile_type,
+coalesce(cast(is_deleted as VARCHAR),'') as is_deleted,
+coalesce(cast(payment_profile_status as VARCHAR),'') as payment_profile_status,
+coalesce(cast(segment as VARCHAR),'') as segment,
+
+
+
+
+coalesce(cast(TRY(CAST(ROUND(ado.eater_visits_st_count_l4w,2) AS varchar))  as varchar),'') as eater_visits_st_count_l4w,
+coalesce(cast(TRY(CAST(ROUND(ado.avg_views_count_l4w,2) AS varchar))  as varchar),'') as avg_views_count_l4w,
+coalesce(cast(TRY(CAST(ado.ads_available_l4w AS varchar))  as varchar),'') as ads_available_l4w,
+coalesce(cast(TRY(CAST(ado.promotion_type_l4w AS varchar)) as varchar),'') as promotion_type_l4w,
+coalesce(cast(TRY(CAST(ROUND(ado.orders_with_ads_l4w,2) AS varchar))  as varchar),'') as orders_with_ads_l4w,
+--coalesce(cast(TRY(CAST(ROUND(TRY(ado.roas_with_ads_table_l4w)),2) AS varchar))  as varchar),'') as roas_with_ads_table_l4w,
+--coalesce(cast(TRY(CAST(ROUND(ado.roas_with_ads_table_l4w),2) AS varchar))  as varchar),'') as roas_with_ads_table_l4w,
+CASE WHEN  coalesce(cast(TRY(CAST(ROUND(TRY(ado.roas_with_ads_table_l4w),2) AS varchar))  as varchar),'')  IN ('Infinity', 'NaN')  THEN '0.00' 
+WHEN coalesce(cast(TRY(CAST(ROUND(TRY(ado.roas_with_ads_table_l4w),2) AS varchar))  as varchar),'')  LIKE '%E%' THEN  '0.00' 
+ELSE coalesce(cast(TRY(CAST(ROUND(TRY(ado.roas_with_ads_table_l4w),2) AS varchar))  as varchar),'')  end  as roas_with_ads_table_l4w,
+
+CASE WHEN  coalesce(cast(TRY(CAST(ROUND(TRY(ado.exposed_roas_with_ads_table_l4w),2) AS varchar))  as varchar),'')  IN ('Infinity', 'NaN')  THEN '0.00' 
+WHEN coalesce(cast(TRY(CAST(ROUND(TRY(ado.exposed_roas_with_ads_table_l4w),2) AS varchar))  as varchar),'')  LIKE '%E%' THEN  '0.00' 
+ELSE coalesce(cast(TRY(CAST(ROUND(TRY(ado.exposed_roas_with_ads_table_l4w),2) AS varchar))  as varchar),'')  end  as exposed_roas_with_ads_table_l4w,
+
+
+coalesce(cast(TRY(CAST(ado.multilocation_flag AS varchar))  as varchar),'') as multilocation_flag,
+CAST(coalesce(ado.days_after_ft ,0) AS decimal(22,2)) AS days_after_ft,
+coalesce(cast(TRY(CAST(ado.normalized_search_term_l4w AS varchar))  as varchar),'') as normalized_search_term_l4w,
+CAST(coalesce(total_eaters_searchs_L4W ,0) AS decimal(22,2)) AS eater_searchs_l4w,
+'0' AS searched_restaurants_count_l4w,
+
+coalesce(CAST(xpaa.experiment_key AS VARCHAR), '') AS experiment_key,
+coalesce(CAST(xpaa.treatment_group_key AS VARCHAR), '') AS treatment_group_key,
+coalesce(CAST(dm.city_name AS VARCHAR), '') AS city_name,
+coalesce(CAST(ads_credits AS VARCHAR), '') AS ads_credits
+
+,coalesce(cast(cast(ror.ror_LM as int) as VARCHAR),'') as ror_LM
+
+,CASE WHEN  coalesce(cast(TRY(CAST(ROUND(TRY(ror.Actual_Monthly_Sales),2) AS varchar))  as varchar),'')  IN ('Infinity', 'NaN')  THEN '0.00' 
+WHEN coalesce(cast(TRY(CAST(ROUND(TRY(ror.Actual_Monthly_Sales),2) AS varchar))  as varchar),'')  LIKE '%E%' THEN  '0.00' 
+ELSE coalesce(cast(TRY(CAST(ROUND(TRY(ror.Actual_Monthly_Sales),2) AS varchar))  as varchar),'')  end  as Actual_Monthly_Sales
+
+
+,CASE WHEN  coalesce(cast(TRY(CAST(ROUND(TRY(ror.Missed_Monthly_Sales_ror),2) AS varchar))  as varchar),'')  IN ('Infinity', 'NaN')  THEN '0.00' 
+WHEN coalesce(cast(TRY(CAST(ROUND(TRY(ror.Missed_Monthly_Sales_ror),2) AS varchar))  as varchar),'')  LIKE '%E%' THEN  '0.00' 
+ELSE coalesce(cast(TRY(CAST(ROUND(TRY(ror.Missed_Monthly_Sales_ror),2) AS varchar))  as varchar),'')  end  as Missed_Monthly_Sales_ror,
+
+
+
+
+
+coalesce(cast(xpgo.number_locations_gos  as VARCHAR),'') as number_locations_gos,
+coalesce(cast(dm.currency_code as VARCHAR),'') AS currency_code
+
+,coalesce(cast(
+case when dm.uber_merchant_type not in ('MERCHANT_TYPE_RESTAURANT','MERCHANT_TYPE_UNKNOWN','') and dm.location_type != 'DELIVERY_API' then 'NV' 
+        when dm.uber_merchant_type  in ('MERCHANT_TYPE_RESTAURANT','MERCHANT_TYPE_UNKNOWN','') and dm.location_type != 'DELIVERY_API' then 'Eats'
+        when dm.location_type = 'DELIVERY_API' then 'Direct' else 'Eats' end as VARCHAR),'') as line_of_business,
+
+coalesce(cast(dm.uber_merchant_type  as VARCHAR),'') as uber_merchant_type ,
+
+
+coalesce(cast(xpgo.is_multilocation_gos  as VARCHAR),'') as is_multilocation_gos,
+coalesce(cast(xpgo.treatment_group_key_gos  as VARCHAR),'') as treatment_group_key_gos
+
+FROM gcrm_data.gcrm_dim_merchant dm 
+LEFT JOIN gcrm_data.gcrm_merchant_analytics_ror ror   ON ror.restaurant_uuid_1 = dm.uuid 
+LEFT JOIN gcrm_data.gcrm_merchant_analytics_ads_adoption  ado ON ado.resto_uuid_ads_campaign = dm.uuid 
+LEFT JOIN gcrm_data.xp_ads_adoption xpaa ON xpaa.restaurant_uuid = dm.uuid
+LEFT JOIN gcrm_data.xp_go_online_sweep xpgo ON xpgo.store_uuid_r1 = dm.uuid
+
