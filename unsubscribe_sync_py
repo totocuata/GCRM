@@ -1,0 +1,165 @@
+"""
+PIPELINE: comms_unsubscriptions_v2
+*** This was moved from communications_platform/unsubscribe_pipeline.py ***
+
+PIPELINE_OWNER: aeneyo@ext.uber.com
+PIPELINE_DESCRIPTION:
+This pipeline is used to query unsubscribe data from Hive and push it to ET and Marketo
+
+"""
+from piper.models.pipeline import Pipeline
+from piper.models.pipeline import RUN_IN_ONE_DATACENTER
+from pipelines.core.exacttarget.tasks.db_to_esp import DBToESP
+from datetime import datetime
+
+# 2023-09-22: Retired Freight Unsub as auth was removed in July
+# 2022-11-21: Moved job from communications_platform/ to exacttarget/
+# The job in exacttarget was temporarily named 'comms_unsubscriptions_v2'
+PIPELINE_ID = 'comms_unsubscriptions'
+HIVE_POOL = 'crm-team'
+# No longer need hive conn as using QueryRunnerActions
+# HIVE_CONNECTION_ID = 'crm_hive_cli'
+
+U4B_MARKETO_CONNECTION_ID = 'crm_marketo_u4b_http_conn'
+FREIGHT_MARKETO_CONNECTION_ID = 'crm_marketo_freight_http_conn'
+
+# .exacttarget: https://uown.uberinternal.com/assets/11d4ba9d-0af4-4ce5-9b5b-5ef56044f44f
+UOWN_GROUP = '11d4ba9d-0af4-4ce5-9b5b-5ef56044f44f'
+
+default_args = {
+    'owner': 'aeneyo@ext.uber.com',
+    'owner_ldap_groups': ['exacttarget'],
+    'schedule_interval': '20 17 * * *',
+    'depends_on_past': False,
+    'auto_backfill': True,
+    'start_date': datetime(2018, 2, 10),
+    'end_date': datetime(2099, 8, 27),
+    'email': ['crm-tools-administrators-group@uber.com'],
+    'email_on_failure': True,
+    'email_on_retry': False,
+    'pool': HIVE_POOL,
+    'retries': 3,
+    'retry_delay': 600,
+    'start_time': 10,
+    'datacenter_choice_mode': RUN_IN_ONE_DATACENTER
+}
+janus_queue = 'crm_adhoc_hq_p5'
+
+pipeline = Pipeline(
+    pipeline_id=PIPELINE_ID,
+    start_date=default_args['start_date'],
+    schedule_interval=default_args['schedule_interval'],
+    datacenter_choice_mode=default_args['datacenter_choice_mode'],
+    create_time_uown=UOWN_GROUP
+)
+
+"""
+The following query generates about 1M records of which only about 50K is legitimate unsubs.
+Filters are added to remove cruft:
+- %.uber.com (ie fake.uber.com,identity-ctf-tests.uber.com,duplicate.uber.com)
+- %@uber.com (900K+ - 90%+ of test entries)
+
+Not filtered but we can look into filtering in the future:
+CTF emails (20K): (%@ctf.com)
+- cf616a6f-763a-4544-9c91-4280b112084cctf@ctf.com
+testaccount gmail (10K) (testaccount+%@gmail.com)
+- testaccount+3cdbbcdd-e096-41e3-a118-6dec2c63fcdb@gmail.com
+"""
+exacttarget_sql = """
+-- exacttarget_sql2
+SELECT DISTINCT
+    cse.msg.email_address AS `email address`,
+    CASE
+        WHEN dc.email IS NOT NULL THEN dc.user_uuid
+        WHEN de.email IS NOT NULL THEN de.eater_uuid
+        WHEN dm.primary_contact_email IS NOT NULL THEN dm.uuid
+        WHEN dd.email IS NOT NULL THEN dd.driver_uuid
+        WHEN du.email IS NOT NULL THEN du.uuid
+        WHEN fd.email IS NOT NULL THEN fd.driver_uuid
+    END AS `subscriber key`,
+    'unsubscribed' AS `status`
+FROM
+    rawdata.kafka_hp_cleopatra_subscriptions_email_NoDedup AS cse
+LEFT JOIN uber_freight.drivers fd ON lower(fd.email) = lower(cse.msg.email_address)
+LEFT JOIN dwh.dim_client dc ON lower(dc.email) = lower(cse.msg.email_address)
+LEFT JOIN dwh.dim_eater de ON lower(de.email) = lower(cse.msg.email_address)
+LEFT JOIN dwh.dim_driver dd ON lower(dd.email) = lower(cse.msg.email_address)
+LEFT JOIN eds.dim_merchant dm ON lower(dm.primary_contact_email) = lower(cse.msg.email_address)
+LEFT JOIN u4b.employee du ON lower(du.email) = lower(cse.msg.email_address)
+WHERE
+    cse.datestr = '{{macros.ds_add(ds, -1)}}'
+    AND cse.msg.has_opted_out = TRUE
+    AND NOT cse.msg.email_address LIKE('%.uber.com')
+    AND NOT cse.msg.email_address LIKE('%@uber.com')
+"""
+
+u4b_marketo_sql = """
+-- u4b_marketo_sql
+with salesforce_contacts as (
+    SELECT email from u4b.salesforce_lead where is_converted = FALSE
+    UNION
+    SELECT email from u4b.salesforce_contact
+)
+
+SELECT DISTINCT
+    cse.msg.email_address as Email,
+    'True' AS unsubscribed,
+    'Lead Unsubscribed Through Cleopatra' AS unsubscribedReason
+FROM
+    rawdata.kafka_hp_cleopatra_subscriptions_email_NoDedup AS cse
+JOIN salesforce_contacts contacts ON lower(contacts.email) = lower(cse.msg.email_address)
+WHERE
+    cse.datestr = '{{macros.ds_add(ds, -1)}}'
+    AND cse.msg.has_opted_out = TRUE
+    AND NOT cse.msg.email_address LIKE('%fake.uber.com')
+"""
+
+# RETIRED 2023-09-22
+freight_marketo_sql = """
+-- freight_marketo_sql
+with salesforce_contacts as (
+    SELECT email from uber_freight.sf_shipper_leads
+)
+
+SELECT DISTINCT
+    cse.msg.email_address as Email,
+    'True' AS unsubscribed,
+    'Lead Unsubscribed Through Cleopatra' AS unsubscribedReason
+FROM
+    rawdata.kafka_hp_cleopatra_subscriptions_email_NoDedup AS cse
+JOIN salesforce_contacts contacts ON lower(contacts.email) = lower(cse.msg.email_address)
+WHERE
+    cse.datestr = '{{macros.ds_add(ds, -1)}}'
+    AND cse.msg.has_opted_out = TRUE
+    AND NOT cse.msg.email_address LIKE('%fake.uber.com')
+"""
+
+hive_to_exacttarget = DBToESP(
+    task_id='crm_hive_to_exacttarget',
+    exacttarget_sql=exacttarget_sql,
+    default_args=default_args,
+    pipeline=pipeline,
+    janus_queue=janus_queue,
+    owner_email='zwang50@ext.uber.com'
+)
+
+u4b_hive_to_marketo = DBToESP(
+    task_id='crm_u4b_hive_to_marketo',
+    marketo_sql=u4b_marketo_sql,
+    marketo_connection_id=U4B_MARKETO_CONNECTION_ID,
+    default_args=default_args,
+    pipeline=pipeline,
+    janus_queue=janus_queue,
+    owner_email='zwang50@ext.uber.com'
+)
+
+# RETIRED 2023-09-22
+# freight_hive_to_marketo = DBToESP(
+#     task_id='crm_freight_hive_to_marketo',
+#     marketo_sql=freight_marketo_sql,
+#     marketo_connection_id=FREIGHT_MARKETO_CONNECTION_ID,
+#     default_args=default_args,
+#     pipeline=pipeline,
+#     janus_queue=janus_queue,
+#     owner_email=default_args['owner']
+# )
