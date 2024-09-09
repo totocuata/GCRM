@@ -1,0 +1,71 @@
+SELECT DISTINCT
+    cse.msg.email_address AS `email address`,
+    CASE
+        WHEN dc.email IS NOT NULL THEN dc.user_uuid
+        WHEN de.email IS NOT NULL THEN de.eater_uuid
+        WHEN dm.primary_contact_email IS NOT NULL THEN dm.uuid
+        WHEN dd.email IS NOT NULL THEN dd.driver_uuid
+        WHEN du.email IS NOT NULL THEN du.uuid
+        WHEN fd.email IS NOT NULL THEN fd.driver_uuid
+    END AS `subscriber key`,
+    'unsubscribed' AS `status`
+FROM
+    secure_rawdata_user.kafka_hp_message_traffic_control_unsubscription_analytics_nodedup AS cse
+LEFT JOIN uber_freight.drivers fd ON lower(fd.email) = lower(cse.msg.email_address)
+LEFT JOIN dwh.dim_client dc ON lower(dc.email) = lower(cse.msg.email_address)
+LEFT JOIN dwh.dim_eater de ON lower(de.email) = lower(cse.msg.email_address)
+LEFT JOIN dwh.dim_driver dd ON lower(dd.email) = lower(cse.msg.email_address)
+LEFT JOIN eds.dim_merchant dm ON lower(dm.primary_contact_email) = lower(cse.msg.email_address)
+LEFT JOIN u4b.employee du ON lower(du.email) = lower(cse.msg.email_address)
+WHERE
+    cse.datestr = '{{macros.ds_add(ds, -1)}}'
+    AND cse.msg.content_category_is_unsubscribed = TRUE
+    AND NOT cse.msg.email_address LIKE('%.uber.com')
+    AND NOT cse.msg.email_address LIKE('%@uber.com')
+    AND msg.channel = 'email'
+    AND msg.entity_type = 'organization'
+"""
+
+u4b_marketo_sql = """
+-- u4b_marketo_sql
+with salesforce_contacts as (
+    SELECT email from u4b.salesforce_lead where is_converted = FALSE
+    UNION
+    SELECT email from u4b.salesforce_contact
+)
+
+SELECT DISTINCT
+    cse.msg.email_address as Email,
+    'True' AS unsubscribed,
+    'Lead Unsubscribed Through Cleopatra' AS unsubscribedReason
+FROM
+    secure_rawdata_user.kafka_hp_message_traffic_control_unsubscription_analytics_nodedup AS cse
+JOIN salesforce_contacts contacts ON lower(contacts.email) = lower(cse.msg.email_address)
+WHERE
+    cse.datestr = '{{macros.ds_add(ds, -1)}}'
+    AND cse.msg.content_category_is_unsubscribed = TRUE
+    AND NOT cse.msg.email_address LIKE('%fake.uber.com')
+    AND msg.channel = 'email'
+    AND msg.entity_type = 'organization'
+"""
+
+# RETIRED 2023-09-22
+freight_marketo_sql = """
+-- freight_marketo_sql
+with salesforce_contacts as (
+    SELECT email from uber_freight.sf_shipper_leads
+)
+
+SELECT DISTINCT
+    cse.msg.email_address as Email,
+    'True' AS unsubscribed,
+    'Lead Unsubscribed Through Cleopatra' AS unsubscribedReason
+FROM
+    secure_rawdata_user.kafka_hp_message_traffic_control_unsubscription_analytics_nodedup AS cse
+JOIN salesforce_contacts contacts ON lower(contacts.email) = lower(cse.msg.email_address)
+WHERE
+    cse.datestr = '{{macros.ds_add(ds, -1)}}'
+    AND cse.msg.content_category_is_unsubscribed = TRUE
+    AND NOT cse.msg.email_address LIKE('%fake.uber.com')
+    AND msg.channel = 'email'
+    AND msg.entity_type = 'organization'
